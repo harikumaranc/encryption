@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decrypt Audio</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #007BFF;
+        }
+
+        label {
+            display: block;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        input {
+            margin-bottom: 20px;
+        }
+
+        button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        a {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: #fff;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        a:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <h1>Decrypt Audio</h1>
+
+    <form action="/decrypt_audio" method="post" enctype="multipart/form-data">
+        <label for="encryptedAudioFile">Choose an encrypted audio file to decrypt:</label>
+        <input type="file" id="encryptedAudioFile" name="encryptedAudioFile" accept=".wav" required>
+
+        <label for="privateKeyFile">Upload private key.pem file for decryption:</label>
+        <input type="file" id="privateKeyFile" name="privateKeyFile" accept=".pem" required>
+
+        <button type="submit">Decrypt</button>
+    </form>
+
+    <audio id="decryptedAudioPlayer" controls style="display: none;"></audio>
+
+    <a href="/download_private_key" download>
+        <button>Download Private Key</button>
+    </a>
+
+    <a href="/download_encrypted_audio" download>
+        <button>Download Encrypted Audio</button>
+    </a>
+
+    <script>
+        const decryptedAudioPlayer = document.getElementById('decryptedAudioPlayer');
+
+        async function playDecryptedAudio() {
+            try {
+                const response = await fetch('/static/decrypted_audio.wav');
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                decryptedAudioPlayer.src = url;
+                decryptedAudioPlayer.load();
+                decryptedAudioPlayer.play();
+                decryptedAudioPlayer.style.display = 'block';
+            } catch (error) {
+                console.error('Error playing decrypted audio:', error);
+            }
+        }
+
+        const decryptForm = document.querySelector('form[action="/decrypt_audio"]');
+        decryptForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const formData = new FormData(decryptForm);
+            const response = await fetch('/decrypt_audio', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            if (data.url) {
+                playDecryptedAudio();
+            }
+        });
+    </script>
+</body>
+</html>

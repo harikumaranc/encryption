@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encrypt Audio</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #007BFF;
+        }
+
+        label {
+            display: block;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        input {
+            margin-bottom: 20px;
+        }
+
+        button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        #downloadEncryptedAudio {
+            display: none;
+        }
+
+        #downloadEncryptedAudio button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #downloadEncryptedAudio button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <h1>Encrypt Audio</h1>
+
+    <form action="/encrypt_audio" method="post" enctype="multipart/form-data">
+        <label for="audioFile">Choose an audio file to encrypt:</label>
+        <input type="file" id="audioFile" name="audioFile" accept=".wav" required>
+
+        <button type="submit">Encrypt</button>
+    </form>
+
+    <div id="downloadEncryptedAudio">
+        <button id="downloadEncryptedAudioButton">Download Encrypted Audio</button>
+    </div>
+
+    <audio id="encryptedAudioPlayer" controls style="display: none;"></audio>
+
+    <script>
+        const encryptedAudioPlayer = document.getElementById('encryptedAudioPlayer');
+        const downloadEncryptedAudioButton = document.getElementById('downloadEncryptedAudioButton');
+
+        async function playEncryptedAudio() {
+            try {
+                const response = await fetch('/static/encrypted_audio.wav');
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                encryptedAudioPlayer.src = url;
+                encryptedAudioPlayer.load();
+                encryptedAudioPlayer.play();
+                encryptedAudioPlayer.style.display = 'block';
+                downloadEncryptedAudioButton.style.display = 'block';
+            } catch (error) {
+                console.error('Error playing encrypted audio:', error);
+            }
+        }
+
+        downloadEncryptedAudioButton.addEventListener('click', async function () {
+            try {
+                const response = await fetch('/download_encrypted_audio');
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'encrypted_audio.wav';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } catch (error) {
+                console.error('Error downloading encrypted audio:', error);
+            }
+        });
+
+        const encryptForm = document.querySelector('form[action="/encrypt_audio"]');
+        encryptForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const formData = new FormData(encryptForm);
+            const response = await fetch('/encrypt_audio', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            if (data.url) {
+                playEncryptedAudio();
+            }
+        });
+    </script>
+</body>
+</html>
